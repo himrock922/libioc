@@ -22,42 +22,56 @@
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
-"""Unit tests for Datasets."""
-import pytest
+"""custom iocage types."""
 import typing
-import libzfs
-
-import libioc.lib
+import re
 
 
-class DatasetsMock(libioc.Datasets.Datasets):
-    """Mock the database."""
+class Path(str):
+    """Wrapper Type for ensuring a `str` matches a Unix Path."""
 
-    ZFS_POOL_ACTIVE_PROPERTY = "org.freebsd.ioc-test:active"
+    blacklist = re.compile(
+        r"(\/\/)|(\/\.\.)|(\.\.\/)|(\n)|(\r)|(^\.+$)",
+        re.MULTILINE
+    )
 
-
-class TestDatasets(object):
-    """Run Datasets unit tests."""
-
-    @pytest.fixture
-    def MockedDatasets(
+    def __init__(
         self,
-        logger: 'libioc.Logger.Logger',
-        pool: libzfs.ZFSPool
-    ) -> typing.Generator[DatasetsMock, None, None]:
-        """Mock a dataset in a disabled pool."""
-        yield DatasetsMock  # noqa: T484
-
-        prop = DatasetsMock.ZFS_POOL_ACTIVE_PROPERTY
-        pool.root_dataset.properties[prop].value = "no"
-
-    def test_pool_can_be_activated(
-        self,
-        MockedDatasets: typing.Generator[DatasetsMock, None, None],
-        pool: libzfs.ZFSPool,
-        logger: 'libioc.Logger.Logger'
+        sequence: str
     ) -> None:
-        """Test if a pool can be activated."""
-        datasets = DatasetsMock(pool=pool, logger=logger)
-        datasets.deactivate()
-        datasets.activate(mountpoint="/iocage-test")
+        if isinstance(sequence, str) is False:
+            raise TypeError("Path must be a string")
+
+        if len(self.blacklist.findall(sequence)) > 0:
+            raise TypeError(f"Illegal path: {sequence}")
+
+        self = sequence  # type: ignore
+
+
+class AbsolutePath(Path):
+    """Wrapper Type for ensuring a `str` matches an absolute Unix Path."""
+
+    def __init__(
+        self,
+        sequence: str
+    ) -> None:
+        if isinstance(sequence, str) is False:
+            raise TypeError("AbsolutePath must be a string or Path")
+
+        if str(sequence).startswith("/") is False:
+            raise TypeError(
+                f"Expected AbsolutePath to begin with /, but got: {sequence}"
+            )
+
+        super().__init__(sequence)
+
+
+class UserInput:
+    """Any kind of user input data."""
+
+    def __init__(
+        self,
+        data: typing.Union[str, int, float, bool, None]
+    ) -> None:
+
+        ...

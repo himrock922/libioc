@@ -35,7 +35,7 @@ except ModuleNotFoundError:
 def _read_requirements(
     filename: str="requirements.txt"
 ) -> typing.Dict[str, typing.List[str]]:
-    reqs = list(parse_requirements(filename, session="ioc"))
+    reqs = list(parse_requirements(filename, session="libioc"))
     return dict(
         install_requires=list(map(lambda x: f"{x.name}{x.specifier}", reqs)),
         dependency_links=list(map(
@@ -50,21 +50,25 @@ ioc_requirements = _read_requirements("requirements.txt")
 if sys.version_info < (3, 6):
     exit("Only Python 3.6 and higher is supported.")
 
+with open("libioc/VERSION", "r") as f:
+    version = f.read().split()[0]
+
 setup(
-    name='ioc',
+    name='libioc',
     license='BSD',
-    version='0.4.0',
-    description='A Python library to manage jails with ioc (an iocage fork)',
+    version=version,
+    description='A Python library to manage jails with ioc{age,cell}',
     keywords='FreeBSD jail ioc',
     author='ioc Contributors',
-    author_email='authors@ioc.io',
-    url='https://github.com/bsdci/ioc',
+    author_email='authors@libioc.io',
+    url='https://github.com/bsdci/libioc',
     python_requires='>=3.6',
-    packages=find_packages(include=["ioc", "ioc.*"]),
+    packages=find_packages(include=["libioc", "libioc.*"]),
+    package_data={'': ['VERSION']},
     include_package_data=True,
     install_requires=ioc_requirements["install_requires"],
     dependency_links=ioc_requirements["dependency_links"],
-    setup_requires=['pytest-runner'],
+    # setup_requires=['pytest-runner'],
     tests_require=['pytest', 'pytest-cov', 'pytest-pep8']
 )
 
